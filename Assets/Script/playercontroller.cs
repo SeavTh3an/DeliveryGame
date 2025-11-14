@@ -11,9 +11,10 @@ public class PlayerControllerFPS : MonoBehaviour
     public float mouseSensitivity = 100f;
 
     [Header("Car Settings")]
-    public GameObject car;          // car object
-    public GameObject carCamera;    // third person car camera
-    public float exitOffset = 2f;   // distance player appears from car
+    public GameObject car;          // Car object
+    public GameObject carCamera;    // Third-person car camera
+    public float exitOffset = 2f;   // Distance player appears from car
+    public float exitHeight = 1f;   // Height above ground when exiting
 
     private CharacterController controller;
     private Vector3 velocity;
@@ -25,7 +26,8 @@ public class PlayerControllerFPS : MonoBehaviour
         controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
 
-        car.GetComponent<CarController>().enabled = false;  // disable car at start
+        // Disable car at start
+        car.GetComponent<CarController>().enabled = false;
         carCamera.SetActive(false);
         playerCamera.gameObject.SetActive(true);
     }
@@ -38,7 +40,8 @@ public class PlayerControllerFPS : MonoBehaviour
             HandleMovement();
 
             // Enter car
-            if (Input.GetKeyDown(KeyCode.E) && Vector3.Distance(transform.position, car.transform.position) < 3f)
+            if (Input.GetKeyDown(KeyCode.E) &&
+                Vector3.Distance(transform.position, car.transform.position) < 3f)
             {
                 EnterCar();
             }
@@ -68,7 +71,7 @@ public class PlayerControllerFPS : MonoBehaviour
     void HandleMovement()
     {
         if (controller.isGrounded && velocity.y < 0)
-            velocity.y = -0.1f;
+            velocity.y = -0.1f; // small downward force to stick to ground
 
         float moveX = Input.GetAxis("Horizontal");
         float moveZ = Input.GetAxis("Vertical");
@@ -76,9 +79,11 @@ public class PlayerControllerFPS : MonoBehaviour
         Vector3 move = transform.right * moveX + transform.forward * moveZ;
         controller.Move(move * moveSpeed * Time.deltaTime);
 
+        // Jump
         if (Input.GetButtonDown("Jump") && controller.isGrounded)
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
+        // Apply gravity
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }
@@ -87,7 +92,7 @@ public class PlayerControllerFPS : MonoBehaviour
     {
         isDriving = true;
 
-        // Hide player
+        // Hide player and disable movement
         controller.enabled = false;
         SetPlayerVisible(false);
 
@@ -107,13 +112,15 @@ public class PlayerControllerFPS : MonoBehaviour
     {
         isDriving = false;
 
-        // Move player next to car
-        transform.position = car.transform.position + car.transform.right * exitOffset;
+        // Calculate safe spawn position: side of car + above ground
+        Vector3 exitPosition = car.transform.position + car.transform.right * exitOffset + Vector3.up * exitHeight;
+        transform.position = exitPosition;
 
+        // Re-enable player movement and visibility
         controller.enabled = true;
         SetPlayerVisible(true);
 
-        // Switch cameras
+        // Switch cameras back
         playerCamera.gameObject.SetActive(true);
         playerCamera.GetComponent<AudioListener>().enabled = true;
         carCamera.SetActive(false);
@@ -128,4 +135,5 @@ public class PlayerControllerFPS : MonoBehaviour
         foreach (Renderer rend in renderers)
             rend.enabled = visible;
     }
+    
 }

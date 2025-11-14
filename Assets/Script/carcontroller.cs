@@ -11,18 +11,21 @@ public class CarController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        rb.useGravity = true;     // Make sure gravity is enabled
+        rb.isKinematic = false;   // Must be non-kinematic
+        rb.mass = 1200f;          // More realistic weight
     }
 
     void FixedUpdate()
     {
         float move = Input.GetAxis("Vertical") * speed;
-        float turn = Input.GetAxis("Horizontal") * turnSpeed * Time.fixedDeltaTime;
+        float turn = Input.GetAxis("Horizontal") * turnSpeed;
 
-        // Move forward/backward
-        rb.MovePosition(rb.position + transform.forward * move * Time.fixedDeltaTime);
+        // Move using velocity (keeps gravity)
+        Vector3 forwardVelocity = transform.forward * move;
+        rb.velocity = new Vector3(forwardVelocity.x, rb.velocity.y, forwardVelocity.z);
 
-        // Rotate
-        rb.MoveRotation(rb.rotation * Quaternion.Euler(0f, turn, 0f));
+        // Rotate car
+        transform.Rotate(Vector3.up * turn * Time.fixedDeltaTime);
     }
-    
 }
